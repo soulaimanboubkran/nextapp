@@ -18,7 +18,7 @@ export default function Test() {
   const handleGet = async () => {
     const response = await fetch(`/api/redis?key=${key}`);
     const data = await response.json();
-    setResult(`Value for key "${key}": ${data.value}`);
+    setResult(`Value for key "${key}": ${data?.value || 'not found'} `);
   };
 
   return (

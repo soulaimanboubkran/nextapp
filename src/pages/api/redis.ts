@@ -1,12 +1,15 @@
-// src/pages/api/redis.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import redis from '../../lib/redis';
+import { checkRedisConnection } from '../../lib/redis-utils'; // Import the utility function
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
+    // Check if Redis is connected
+    await checkRedisConnection();
+
     if (req.method === 'POST') {
       // Handle POST request to set a value in Redis
       const { key, value } = req.body;
@@ -38,6 +41,13 @@ export default async function handler(
     }
   } catch (error) {
     console.error('Redis error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+
+    // Handle the "Redis is not connected" error
+    if (error instanceof Error && error.message === 'Redis is not connected. Please check the Redis server.') {
+      return res.status(500).json({ message: error.message });
+    }
+
+    // Fallback for other errors
+    return res.status(500).json({ message: 'An unexpected error occurred' });
   }
 }
