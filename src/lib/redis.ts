@@ -4,7 +4,7 @@ const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379', 10),
   retryStrategy: (times) => {
-    if (times > 5) {
+    if (times > 20) {
       console.error('Redis: Too many retries, stopping reconnection.');
       return null; // Stop retrying after 5 attempts
     }
@@ -18,8 +18,8 @@ redis.on('connect', () => {
   console.log('Redis connected successfully.');
 });
 
-redis.on('error', (err) => {
-  console.error('Redis connection error:', err.message);
+redis.on('error', () => {
+  console.error('Redis connection error:');
 });
 
 export default redis;
