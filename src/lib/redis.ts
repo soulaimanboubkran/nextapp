@@ -1,25 +1,31 @@
-import Redis from 'ioredis';
+import { createClient } from 'redis';
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379', 10),
-  retryStrategy: (times) => {
-    if (times > 20) {
-      console.error('Redis: Too many retries, stopping reconnection.');
-      return null; // Stop retrying after 5 attempts
-    }
-    const delay = 60000; // Retry every 1 minute (60,000ms)
-    console.warn(`Redis connection failed. Retrying in ${delay / 1000} seconds...`);
-    return delay;
-  },
-});
+const createRedisClient = () => {
+  const client = createClient({
+    url: process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`
+  });
 
-redis.on('connect', () => {
-  console.log('Redis connected successfully.');
-});
+  client.on('error', (err) => console.error('Redis Client Error', err));
 
-redis.on('error', () => {
-  console.error('Redis connection error:');
-});
+  return client;
+};
+
+const globalForRedis = globalThis as unknown as { 
+  redis: ReturnType<typeof createRedisClient> | undefined 
+};
+
+export const redis = globalForRedis.redis ?? createRedisClient();
+
+if (process.env.NODE_ENV !== 'production') globalForRedis.redis = redis;
+
+// Connect to Redis
+(async () => {
+  try {
+    await redis.connect();
+    console.log('Redis connected successfully');
+  } catch (err) {
+    console.error('Failed to connect to Redis', err);
+  }
+})();
 
 export default redis;

@@ -1,4 +1,3 @@
-// src/lib/redis-utils.ts
 import redis from './redis'; // Import the Redis client
 
 let isRedisConnected = false;
@@ -13,8 +12,8 @@ export async function checkRedisConnection() {
   }
 
   try {
-    // Check if Redis is in a "closed" state
-    if (redis.status === 'end' || redis.status === 'close') {
+    // Check if Redis is not open or ready
+    if (!redis.isOpen || !redis.isReady) {
       console.log('Redis connection is closed. Attempting to reconnect...');
       await redis.connect(); // Explicitly reconnect
     }
